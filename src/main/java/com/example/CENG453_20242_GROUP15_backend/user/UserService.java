@@ -1,15 +1,15 @@
 package com.example.CENG453_20242_GROUP15_backend.user;
 
-import com.example.CENG453_20242_GROUP15_backend.config.SecurityConfig;
-import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
-import com.example.CENG453_20242_GROUP15_backend.user.UserRepository;
+import com.example.CENG453_20242_GROUP15_backend.leaderboard.LeaderboardDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -71,6 +71,40 @@ public class UserService {
         user.get().setPassword(passwordEncoder.encode(newPassword)); // Encrypt new password
         user.get().setResetToken(null); // Clear the reset token
         userRepository.save(user.get());
+    }
+
+    // Get all-time leaderboard
+    public List<LeaderboardDTO> getAllTimeLeaderboard() {
+        List<UserEntity> users = userRepository.findTopUsersAllTime();
+        return users.stream()
+                .map(user -> new LeaderboardDTO(user.getUsername(), user.getScore()))
+                .collect(Collectors.toList());
+    }
+
+    // Get weekly leaderboard
+    public List<LeaderboardDTO> getWeeklyLeaderboard() {
+        LocalDateTime weekStart = LocalDateTime.now().minusWeeks(1);
+        List<UserEntity> users = userRepository.findTopUsersThisWeek(weekStart);
+        return users.stream()
+                .map(user -> new LeaderboardDTO(user.getUsername(), user.getScore()))
+                .collect(Collectors.toList());
+    }
+
+    // Get monthly leaderboard
+    public List<LeaderboardDTO> getMonthlyLeaderboard() {
+        LocalDateTime monthStart = LocalDateTime.now().minusMonths(1);
+        List<UserEntity> users = userRepository.findTopUsersThisMonth(monthStart);
+        return users.stream()
+                .map(user -> new LeaderboardDTO(user.getUsername(), user.getScore()))
+                .collect(Collectors.toList());
+    }
+
+    // Method to update user's score after each game
+    public void updateUserScore(Long userId, Integer newScore) {
+        UserEntity user = userRepository.findById(Math.toIntExact(userId)).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setScore(newScore);
+        user.setLastPlayed(LocalDateTime.now());
+        userRepository.save(user);
     }
 }
 

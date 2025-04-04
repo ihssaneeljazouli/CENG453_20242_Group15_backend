@@ -2,6 +2,8 @@ package com.example.CENG453_20242_GROUP15_backend.user;
 
 import jakarta.persistence.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -28,6 +30,7 @@ public class UserEntity {
 
 
     private Integer score;
+    private LocalDateTime lastPlayed;
 
 
     public UserEntity(String name, String username, String email, String password) {
@@ -87,6 +90,14 @@ public class UserEntity {
         this.score = score;
     }
 
+    public LocalDateTime getLastPlayed() {
+        return lastPlayed;
+    }
+
+    public void setLastPlayed(LocalDateTime lastPlayed) {
+        this.lastPlayed = lastPlayed;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -102,6 +113,7 @@ public class UserEntity {
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
     }
+
 
 
 }

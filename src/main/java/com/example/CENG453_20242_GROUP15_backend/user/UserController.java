@@ -1,13 +1,12 @@
 package com.example.CENG453_20242_GROUP15_backend.user;
 
-import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
-import com.example.CENG453_20242_GROUP15_backend.user.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -61,4 +60,6 @@ public class UserController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+
 }
