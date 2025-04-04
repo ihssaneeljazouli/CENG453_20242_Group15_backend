@@ -47,21 +47,8 @@ public class UserService {
     // Verify user credentials for login
     public boolean authenticateUser(String email, String rawPassword) {
         Optional<UserEntity> user = userRepository.findByEmail(email);
-
-        if (user.isEmpty()) {
-            System.out.println("User not found with email: " + email);
-            return false;
-        }
-
-        System.out.println("Stored password: " + user.get().getPassword());
-        System.out.println("Raw password: " + rawPassword);
-
-        boolean matches = passwordEncoder.matches(rawPassword, user.get().getPassword());
-        System.out.println("Password match: " + matches);
-
-        return matches;
+        return user.isPresent() && passwordEncoder.matches(rawPassword, user.get().getPassword());
     }
-
 
     // Generate and set a password reset token
     public String generateResetToken(String email) {
