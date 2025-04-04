@@ -1,9 +1,11 @@
 package com.example.CENG453_20242_GROUP15_backend.user;
 
+import com.example.CENG453_20242_GROUP15_backend.config.SecurityConfig;
 import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
 import com.example.CENG453_20242_GROUP15_backend.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,8 +16,16 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    public UserService(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public String encodePassword(String password) {
+        return passwordEncoder.encode(password);
+    }
 
     // Register a new user
     public UserEntity registerUser(UserEntity user) {
