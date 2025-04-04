@@ -28,7 +28,7 @@ public class UserService {
     }
 
     // Register a new user
-    public UserEntity registerUser(UserEntity user) {
+    public void registerUser(UserEntity user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username is already in use.");
         }
@@ -36,7 +36,7 @@ public class UserService {
             throw new RuntimeException("Email is already in use.");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     // Find user by email
