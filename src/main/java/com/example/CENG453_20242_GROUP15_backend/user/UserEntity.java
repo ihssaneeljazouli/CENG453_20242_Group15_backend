@@ -37,18 +37,13 @@ public class UserEntity {
         this.name = name;
         this.username = username;
         this.email = email;
-        this.password = encryptPassword(password); // Encrypt password
+        this.password = password;
         this.score = 0;
     }
 
     public UserEntity() {
         this.score = 0;
     }
-
-    private String encryptPassword(String password) {
-        return new BCryptPasswordEncoder().encode(password);
-    }
-
 
 
     public Integer getId() {
@@ -103,7 +98,7 @@ public class UserEntity {
     }
 
     public void setPassword(String password) {
-        this.password = new BCryptPasswordEncoder().encode(password);
+        this.password = password;
     }
 
     public String getResetToken() {

@@ -36,6 +36,9 @@ public class UserService {
             throw new RuntimeException("Email is already in use.");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        System.out.println("Registered email: " + user.getEmail());
+        System.out.println("Hashed password: " + user.getPassword());
+
         userRepository.save(user);
     }
 
@@ -46,8 +49,18 @@ public class UserService {
 
     // Verify user credentials for login
     public boolean authenticateUser(String email, String rawPassword) {
+        System.out.println("Login attempt for email: " + email);
         Optional<UserEntity> user = userRepository.findByEmail(email);
-        return user.isPresent() && passwordEncoder.matches(rawPassword, user.get().getPassword());
+
+        if (user.isPresent()) {
+            System.out.println("Found user, stored hashed password: " + user.get().getPassword());
+            boolean matches = passwordEncoder.matches(rawPassword, user.get().getPassword());
+            System.out.println("Password match result: " + matches);
+            return matches;
+        } else {
+            System.out.println("No user found with that email.");
+            return false;
+        }
     }
 
     // Generate and set a password reset token
