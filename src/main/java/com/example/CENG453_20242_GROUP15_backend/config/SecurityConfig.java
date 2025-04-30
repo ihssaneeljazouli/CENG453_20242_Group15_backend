@@ -29,7 +29,8 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
                         .anyRequest().authenticated()
-                );
+                )
+                .httpBasic(customizer -> {});
         return http.build();
     }
 
