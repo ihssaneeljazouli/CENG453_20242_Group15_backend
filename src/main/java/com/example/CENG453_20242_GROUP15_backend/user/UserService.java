@@ -54,6 +54,8 @@ public class UserService {
 
         if (user.isPresent()) {
             System.out.println("Found user, stored hashed password: " + user.get().getPassword());
+            System.out.println("Registering password (hashed): " + passwordEncoder.encode(rawPassword));
+
             boolean matches = passwordEncoder.matches(rawPassword, user.get().getPassword());
             System.out.println("Password match result: " + matches);
             return matches;
