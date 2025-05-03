@@ -2,7 +2,7 @@ package com.example.CENG453_20242_GROUP15_backend.game;
 
 public class PlayCardRequest {
     private int cardIndex; // index of the card in the human player's hand
-    private Card.Color chosenColor; // Only needed for Wild/Wild Draw Four
+    private Card.Color chosenColor; // needed for Wild/Wild Draw Four
 
     public PlayCardRequest() {}
 
