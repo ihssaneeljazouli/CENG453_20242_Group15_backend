@@ -2,9 +2,7 @@ package com.example.CENG453_20242_GROUP15_backend.game;
 
 public class Card {
     public enum Color { RED, YELLOW, GREEN, BLUE, WILD }
-    public enum Type {
-        NUMBER, SKIP, REVERSE, DRAW_TWO, WILD, WILD_DRAW_FOUR
-    }
+    public enum Type {NUMBER, SKIP, REVERSE, DRAW_TWO, WILD, WILD_DRAW_FOUR}
 
     private Color color;
     private Type type;

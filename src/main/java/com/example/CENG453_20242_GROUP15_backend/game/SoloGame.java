@@ -7,6 +7,7 @@ public class SoloGame {
     private final Game game;
     private final Random random = new Random();
     private int drawTwoStack = 0;
+    private Player winner;
 
     public SoloGame(Game game) {
         this.game = game;
@@ -105,4 +106,34 @@ public class SoloGame {
         Card.Color[] colors = {Card.Color.RED, Card.Color.YELLOW, Card.Color.GREEN, Card.Color.BLUE};
         return colors[random.nextInt(colors.length)];
     }
+
+    public boolean cheat(String action) {
+        Card.Color currentColor = game.getCurrentColor();
+
+        Card cheatCard = switch (action.toLowerCase()) {
+            case "skip" -> new Card(currentColor, Card.Type.SKIP, -1);
+            case "reverse" -> new Card(currentColor, Card.Type.REVERSE, -1);
+            case "drawtwo" -> new Card(currentColor, Card.Type.DRAW_TWO, -1);
+            case "wild" -> new Card(Card.Color.WILD, Card.Type.WILD, -1);
+            case "wilddrawfour" -> new Card(Card.Color.WILD, Card.Type.WILD_DRAW_FOUR, -1);
+            default -> null;
+        };
+
+        if (cheatCard == null) return false;
+
+        // Use default color (e.g., RED) for wilds
+        Card.Color chosenColor;
+        if (cheatCard.getType() == Card.Type.WILD || cheatCard.getType() == Card.Type.WILD_DRAW_FOUR) {
+            chosenColor = Card.Color.RED; // default for wilds
+        } else {
+            chosenColor = cheatCard.getColor();
+        }
+
+        applyCardEffect(cheatCard, chosenColor);
+        return true;
+    }
+    public Player getWinner(){
+        return game.getWinner();
+    }
+
 }

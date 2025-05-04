@@ -10,6 +10,8 @@ public class Game {
     private boolean isClockwise = true;
     private Card.Color currentColor;
     private boolean gameOver = false;
+    private Player winner;
+
 
     public Game(List<Player> players) {
         this.players = players;
@@ -85,8 +87,18 @@ public class Game {
     public void checkWin(Player player) {
         if (player.getHand().isEmpty()) {
             setGameOver(true);
+            winner = player;
         }
     }
+
+    public List<List<Card>> getHands() {
+        List<List<Card>> allHands = new ArrayList<>();
+        for (Player player : players) {
+            allHands.add(player.getHand());
+        }
+        return allHands;
+    }
+
 
     // Getters and setters
 
@@ -97,6 +109,8 @@ public class Game {
     public void setPlayers(List<Player> players) {
         this.players = players;
     }
+
+
 
     public Deque<Card> getDrawPile() {
         return drawPile;
@@ -145,4 +159,5 @@ public class Game {
     public void setGameOver(boolean gameOver) {
         this.gameOver = gameOver;
     }
+    public Player getWinner(){return winner;};
 }

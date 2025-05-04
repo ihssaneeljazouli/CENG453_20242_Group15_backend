@@ -42,10 +42,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // Find user by email
-    public Optional<UserEntity> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
 
     // Verify user credentials for login
     public boolean authenticateUser(String email, String rawPassword) {
@@ -54,7 +50,6 @@ public class UserService {
 
         if (user.isPresent()) {
             System.out.println("Found user, stored hashed password: " + user.get().getPassword());
-            System.out.println("Registering password (hashed): " + passwordEncoder.encode(rawPassword));
 
             boolean matches = passwordEncoder.matches(rawPassword, user.get().getPassword());
             System.out.println("Password match result: " + matches);
@@ -115,11 +110,13 @@ public class UserService {
     }
 
     // Method to update user's score after each game
-    public void updateUserScore(Long userId, Integer newScore) {
+    public void updateUserScore(Integer userId, Integer newScore) {
         UserEntity user = userRepository.findById(Math.toIntExact(userId)).orElseThrow(() -> new RuntimeException("User not found"));
         user.setScore(newScore);
         user.setLastPlayed(LocalDateTime.now());
         userRepository.save(user);
     }
+
+
 }
 

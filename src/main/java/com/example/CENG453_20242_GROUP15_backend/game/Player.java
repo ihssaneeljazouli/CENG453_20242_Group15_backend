@@ -15,6 +15,10 @@ public class Player {
         this.name = name;
         this.isCPU = isCPU;
     }
+    public Player(String name, boolean isCPU) {
+        this.name = name;
+        this.isCPU = isCPU;
+    }
 
     public Integer getId() {
         return id;
