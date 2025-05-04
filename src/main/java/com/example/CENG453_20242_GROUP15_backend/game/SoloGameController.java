@@ -1,5 +1,6 @@
 package com.example.CENG453_20242_GROUP15_backend.game;
 
+import ch.qos.logback.classic.Logger;
 import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
 import com.example.CENG453_20242_GROUP15_backend.user.UserRepository;
 import com.example.CENG453_20242_GROUP15_backend.user.UserService;
@@ -13,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/solo")
 @CrossOrigin
@@ -24,15 +26,12 @@ public class SoloGameController {
     @Autowired
     private UserService userService;
 
+
     @PostConstruct
     public void initGame() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            // Handle the case where authentication is missing
-            throw new IllegalStateException("Authentication is required but not available.");
-        }
-        if (authentication != null) {
-            String username = authentication.getName();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            String username = auth.getName();
             Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
 
             if (optionalUser.isEmpty()) {
@@ -49,8 +48,13 @@ public class SoloGameController {
             );
             Game game = new Game(players);
             this.soloGame = new SoloGame(game);
+        } else {
+            System.out.println("No authenticated user at startup. Skipping game initialization.");
+
         }
     }
+
+
 
     @GetMapping("/state")
     public GameStateResponse getGameState() {
