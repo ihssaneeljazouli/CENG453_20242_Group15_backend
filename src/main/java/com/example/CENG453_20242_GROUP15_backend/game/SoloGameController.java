@@ -5,8 +5,6 @@ import com.example.CENG453_20242_GROUP15_backend.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -24,10 +22,7 @@ public class SoloGameController {
     @Autowired
     private UserService userService;
 
-    private String getCurrentUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
-    }
+
 
     @PostMapping("/start")
     public ResponseEntity<String> startGame() {
@@ -53,7 +48,7 @@ public class SoloGameController {
 
     @GetMapping("/state")
     public ResponseEntity<?> getGameState() {
-        String username = getCurrentUsername();
+        String username = userService.getCurrentUsername();
         SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
@@ -63,7 +58,7 @@ public class SoloGameController {
 
     @PostMapping("/play")
     public ResponseEntity<?> playCard(@RequestBody PlayCardRequest request) {
-        String username = getCurrentUsername();
+        String username = userService.getCurrentUsername();
         SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
@@ -106,7 +101,7 @@ public class SoloGameController {
 
     @PostMapping("/draw")
     public ResponseEntity<?> drawCard() {
-        String username = getCurrentUsername();
+        String username = userService.getCurrentUsername();
         SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
@@ -123,13 +118,13 @@ public class SoloGameController {
             return startResponse;
         }
 
-        String username = getCurrentUsername();
+        String username = userService.getCurrentUsername();
         return ResponseEntity.ok(GameStateResponse.from(soloGames.get(username).getGame()));
     }
 
     @PostMapping("/cheat/{action}")
     public ResponseEntity<?> cheatPlay(@PathVariable String action) {
-        String username = getCurrentUsername();
+        String username = userService.getCurrentUsername();
         SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
