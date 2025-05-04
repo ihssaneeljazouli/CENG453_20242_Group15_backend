@@ -31,23 +31,25 @@ public class SoloGameController {
             // Handle the case where authentication is missing
             throw new IllegalStateException("Authentication is required but not available.");
         }
-        String username = authentication.getName();
-        Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
+        if (authentication != null) {
+            String username = authentication.getName();
+            Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
 
-        if (optionalUser.isEmpty()) {
-            throw new RuntimeException("Authenticated user not found in the database");
+            if (optionalUser.isEmpty()) {
+                throw new RuntimeException("Authenticated user not found in the database");
+            }
+
+            UserEntity user = optionalUser.get();
+
+            List<Player> players = List.of(
+                    new Player(user.getId(), user.getUsername(), false),  // Real user
+                    new Player("CPU1", true),
+                    new Player("CPU2", true),
+                    new Player("CPU3", true)
+            );
+            Game game = new Game(players);
+            this.soloGame = new SoloGame(game);
         }
-
-        UserEntity user = optionalUser.get();
-
-        List<Player> players = List.of(
-                new Player(user.getId(), user.getUsername(), false),  // Real user
-                new Player( "CPU1", true),
-                new Player("CPU2", true),
-                new Player("CPU3", true)
-        );
-        Game game = new Game(players);
-        this.soloGame = new SoloGame(game);
     }
 
     @GetMapping("/state")
