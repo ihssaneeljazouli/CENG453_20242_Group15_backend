@@ -1,32 +1,36 @@
 package com.example.CENG453_20242_GROUP15_backend.game;
 
+import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Player {
-    private Integer id;
+    private UserEntity user;
     private String name;
     private List<Card> hand = new ArrayList<>();
     private boolean isCPU;
     private boolean hasDeclaredUno = false;
 
-    public Player(Integer id, String name, boolean isCPU) {
-        this.id = id;
-        this.name = name;
-        this.isCPU = isCPU;
+
+    public Player(UserEntity user){
+        this.user=user;
+        this.name = user.getUsername();
+        this.isCPU = false;
     }
     public Player(String name, boolean isCPU) {
         this.name = name;
         this.isCPU = isCPU;
     }
 
-    public Integer getId() {
-        return id;
+    public UserEntity getUser() {
+        return user;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public Integer getId() {
+        return user != null ? user.getId() : null;
     }
+
 
     public String getName() {
         return name;

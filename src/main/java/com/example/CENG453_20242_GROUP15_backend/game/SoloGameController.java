@@ -1,7 +1,6 @@
 package com.example.CENG453_20242_GROUP15_backend.game;
 
 import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
-import com.example.CENG453_20242_GROUP15_backend.user.UserRepository;
 import com.example.CENG453_20242_GROUP15_backend.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,8 +19,7 @@ public class SoloGameController {
 
     private final Map<String, SoloGame> soloGames = new ConcurrentHashMap<>();
 
-    @Autowired
-    private UserRepository userRepository;
+
 
     @Autowired
     private UserService userService;
@@ -33,20 +31,14 @@ public class SoloGameController {
 
     @PostMapping("/start")
     public ResponseEntity<String> startGame() {
-        String username = getCurrentUsername();
-        if (username == null) {
+        Optional<UserEntity> optionalUser = userService.getCurrentUser();
+        if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
         }
 
-        Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
-        }
-
         UserEntity user = optionalUser.get();
-
         List<Player> players = List.of(
-                new Player(user.getId(), user.getUsername(), false),
+                new Player(user),
                 new Player("CPU1", true),
                 new Player("CPU2", true),
                 new Player("CPU3", true)
@@ -54,7 +46,7 @@ public class SoloGameController {
 
         Game game = new Game(players);
         SoloGame soloGame = new SoloGame(game);
-        soloGames.put(username, soloGame);
+        soloGames.put(user.getUsername(), soloGame);
 
         return ResponseEntity.ok("Solo game started.");
     }
@@ -100,11 +92,14 @@ public class SoloGameController {
         }
 
         if (soloGame.isGameOver()) {
-            boolean playerWon = soloGame.getWinner().equals(current);
-            if (!current.isCPU()) {
-                userService.updateUserScore(current.getId(), playerWon ? 1 : -1);
+            Player winner = soloGame.getWinner();
+            if (!winner.isCPU() && winner.getUser() != null) {
+                userService.updateUserScore(winner.getUser().getId(), 1); // reward winner
+            } else {
+                userService.updateUserScore(current.getUser().getId(), -1); // human player lost
             }
         }
+
 
         return ResponseEntity.ok(GameStateResponse.from(game));
     }
