@@ -6,6 +6,7 @@ import com.example.CENG453_20242_GROUP15_backend.user.UserRepository;
 import com.example.CENG453_20242_GROUP15_backend.user.UserService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -27,32 +28,35 @@ public class SoloGameController {
     private UserService userService;
 
 
-    @PostConstruct
-    public void initGame() {
+    @PostMapping("/start")
+    public ResponseEntity<String> startGame() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()) {
             String username = auth.getName();
             Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
 
             if (optionalUser.isEmpty()) {
-                throw new RuntimeException("Authenticated user not found in the database");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
             }
 
             UserEntity user = optionalUser.get();
 
             List<Player> players = List.of(
-                    new Player(user.getId(), user.getUsername(), false),  // Real user
+                    new Player(user.getId(), user.getUsername(), false),
                     new Player("CPU1", true),
                     new Player("CPU2", true),
                     new Player("CPU3", true)
             );
+
             Game game = new Game(players);
             this.soloGame = new SoloGame(game);
-        } else {
-            System.out.println("No authenticated user at startup. Skipping game initialization.");
 
+            return ResponseEntity.ok("Solo game started.");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
         }
     }
+
 
 
 
@@ -105,7 +109,7 @@ public class SoloGameController {
 
     @PostMapping("/restart")
     public GameStateResponse restartGame() {
-        initGame();
+        startGame();
         return GameStateResponse.from(soloGame.getGame());
     }
 
