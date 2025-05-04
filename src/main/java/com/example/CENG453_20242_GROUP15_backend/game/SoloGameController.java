@@ -7,18 +7,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/solo")
 @CrossOrigin
 public class SoloGameController {
 
-    private SoloGame soloGame;
+    private final Map<String, SoloGame> soloGames = new ConcurrentHashMap<>();
 
     @Autowired
     private UserRepository userRepository;
@@ -26,37 +26,43 @@ public class SoloGameController {
     @Autowired
     private UserService userService;
 
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+    }
+
     @PostMapping("/start")
     public ResponseEntity<String> startGame() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()) {
-            String username = auth.getName();
-            Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
-
-            if (optionalUser.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
-            }
-
-            UserEntity user = optionalUser.get();
-
-            List<Player> players = List.of(
-                    new Player(user.getId(), user.getUsername(), false),
-                    new Player("CPU1", true),
-                    new Player("CPU2", true),
-                    new Player("CPU3", true)
-            );
-
-            Game game = new Game(players);
-            this.soloGame = new SoloGame(game);
-
-            return ResponseEntity.ok("Solo game started.");
-        } else {
+        String username = getCurrentUsername();
+        if (username == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
         }
+
+        Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+
+        UserEntity user = optionalUser.get();
+
+        List<Player> players = List.of(
+                new Player(user.getId(), user.getUsername(), false),
+                new Player("CPU1", true),
+                new Player("CPU2", true),
+                new Player("CPU3", true)
+        );
+
+        Game game = new Game(players);
+        SoloGame soloGame = new SoloGame(game);
+        soloGames.put(username, soloGame);
+
+        return ResponseEntity.ok("Solo game started.");
     }
 
     @GetMapping("/state")
     public ResponseEntity<?> getGameState() {
+        String username = getCurrentUsername();
+        SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
@@ -65,44 +71,48 @@ public class SoloGameController {
 
     @PostMapping("/play")
     public ResponseEntity<?> playCard(@RequestBody PlayCardRequest request) {
+        String username = getCurrentUsername();
+        SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
 
-        Player current = soloGame.getGame().getCurrentPlayer();
-        Card cardToPlay = current.getHand().get(request.getCardIndex());
+        Game game = soloGame.getGame();
+        Player current = game.getCurrentPlayer();
 
+        if (current.isCPU()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("It's not your turn.");
+        }
+
+        List<Card> hand = current.getHand();
+        if (request.getCardIndex() < 0 || request.getCardIndex() >= hand.size()) {
+            return ResponseEntity.badRequest().body("Invalid card index");
+        }
+
+        Card cardToPlay = hand.get(request.getCardIndex());
         Card.Color chosenColor = request.getChosenColor();
-        boolean success = soloGame.playPlayerCard(cardToPlay, chosenColor);
 
+        boolean success = soloGame.playPlayerCard(cardToPlay, chosenColor);
         if (!success) return ResponseEntity.badRequest().body("Invalid move");
 
-        // Let CPUs take their turns as long as the game isn't over
-        while (!soloGame.isGameOver() && !soloGame.getGame().getCurrentPlayer().equals(current)) {
+        while (!soloGame.isGameOver() && !game.getCurrentPlayer().equals(current)) {
             soloGame.playCpuTurn();
         }
 
-        // Update leaderboard on game end
         if (soloGame.isGameOver()) {
             boolean playerWon = soloGame.getWinner().equals(current);
-
-            // Ensure the current player is human (not CPU)
             if (!current.isCPU()) {
-                Integer id = current.getId();  // Get the human player's ID
-
-                if (playerWon) {
-                    userService.updateUserScore(id, 1);  // Update score for win
-                } else {
-                    userService.updateUserScore(id, -1);  // Update score for loss
-                }
+                userService.updateUserScore(current.getId(), playerWon ? 1 : -1);
             }
         }
 
-        return ResponseEntity.ok(GameStateResponse.from(soloGame.getGame()));
+        return ResponseEntity.ok(GameStateResponse.from(game));
     }
 
     @PostMapping("/draw")
     public ResponseEntity<?> drawCard() {
+        String username = getCurrentUsername();
+        SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
@@ -117,11 +127,15 @@ public class SoloGameController {
         if (!startResponse.getStatusCode().is2xxSuccessful()) {
             return startResponse;
         }
-        return ResponseEntity.ok(GameStateResponse.from(soloGame.getGame()));
+
+        String username = getCurrentUsername();
+        return ResponseEntity.ok(GameStateResponse.from(soloGames.get(username).getGame()));
     }
 
     @PostMapping("/cheat/{action}")
     public ResponseEntity<?> cheatPlay(@PathVariable String action) {
+        String username = getCurrentUsername();
+        SoloGame soloGame = soloGames.get(username);
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
