@@ -6,6 +6,7 @@ import com.example.CENG453_20242_GROUP15_backend.user.UserService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -25,7 +26,12 @@ public class SoloGameController {
 
     @PostConstruct
     public void initGame() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            // Handle the case where authentication is missing
+            throw new IllegalStateException("Authentication is required but not available.");
+        }
+        String username = authentication.getName();
         Optional<UserEntity> optionalUser = userRepository.findByUsername(username);
 
         if (optionalUser.isEmpty()) {
