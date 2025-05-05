@@ -1,7 +1,9 @@
 package com.example.CENG453_20242_GROUP15_backend.game;
 
+import com.example.CENG453_20242_GROUP15_backend.exception.UnauthorizedException;
 import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
 import com.example.CENG453_20242_GROUP15_backend.user.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,21 +19,25 @@ public class SoloGameController {
 
     private final Map<String, SoloGame> soloGames = new ConcurrentHashMap<>();
 
-
-
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private HttpSession session;
 
+    // Helper method to check if the user is authenticated
+    private UserEntity getAuthenticatedUser() {
+        UserEntity user = (UserEntity) session.getAttribute("user");
+        if (user == null) {
+            throw new UnauthorizedException("User not authenticated.");
+        }
+        return user;
+    }
 
     @PostMapping("/start")
     public ResponseEntity<String> startGame() {
-        Optional<UserEntity> optionalUser = userService.getCurrentUser();
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
-        }
+        UserEntity user = getAuthenticatedUser();
 
-        UserEntity user = optionalUser.get();
         List<Player> players = List.of(
                 new Player(user),
                 new Player("CPU1", true),
@@ -48,18 +54,21 @@ public class SoloGameController {
 
     @GetMapping("/state")
     public ResponseEntity<?> getGameState() {
-        String username = userService.getCurrentUsername();
-        SoloGame soloGame = soloGames.get(username);
+        UserEntity user = getAuthenticatedUser();
+
+        SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
+
         return ResponseEntity.ok(GameStateResponse.from(soloGame.getGame()));
     }
 
     @PostMapping("/play")
     public ResponseEntity<?> playCard(@RequestBody PlayCardRequest request) {
-        String username = userService.getCurrentUsername();
-        SoloGame soloGame = soloGames.get(username);
+        UserEntity user = getAuthenticatedUser();
+
+        SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
@@ -82,6 +91,7 @@ public class SoloGameController {
         boolean success = soloGame.playPlayerCard(cardToPlay, chosenColor);
         if (!success) return ResponseEntity.badRequest().body("Invalid move");
 
+        // Simulate CPU turns after the player's move
         while (!soloGame.isGameOver() && !game.getCurrentPlayer().equals(current)) {
             soloGame.playCpuTurn();
         }
@@ -89,20 +99,20 @@ public class SoloGameController {
         if (soloGame.isGameOver()) {
             Player winner = soloGame.getWinner();
             if (!winner.isCPU() && winner.getUser() != null) {
-                userService.updateUserScore(winner.getUser().getId(), 1); // reward winner
+                userService.updateUserScore(winner.getUser().getId(), 1); // Reward winner
             } else {
-                userService.updateUserScore(current.getUser().getId(), -1); // human player lost
+                userService.updateUserScore(current.getUser().getId(), -1); // Human player lost
             }
         }
-
 
         return ResponseEntity.ok(GameStateResponse.from(game));
     }
 
     @PostMapping("/draw")
     public ResponseEntity<?> drawCard() {
-        String username = userService.getCurrentUsername();
-        SoloGame soloGame = soloGames.get(username);
+        UserEntity user = getAuthenticatedUser();
+
+        SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
@@ -113,19 +123,22 @@ public class SoloGameController {
 
     @PostMapping("/restart")
     public ResponseEntity<?> restartGame() {
+        UserEntity user = getAuthenticatedUser();
+
+        // Restart the game
         ResponseEntity<String> startResponse = startGame();
         if (!startResponse.getStatusCode().is2xxSuccessful()) {
             return startResponse;
         }
 
-        String username = userService.getCurrentUsername();
-        return ResponseEntity.ok(GameStateResponse.from(soloGames.get(username).getGame()));
+        return ResponseEntity.ok(GameStateResponse.from(soloGames.get(user.getUsername()).getGame()));
     }
 
     @PostMapping("/cheat/{action}")
     public ResponseEntity<?> cheatPlay(@PathVariable String action) {
-        String username = userService.getCurrentUsername();
-        SoloGame soloGame = soloGames.get(username);
+        UserEntity user = getAuthenticatedUser();
+
+        SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
@@ -137,4 +150,7 @@ public class SoloGameController {
 
         return ResponseEntity.ok(GameStateResponse.from(soloGame.getGame()));
     }
+
+
+
 }

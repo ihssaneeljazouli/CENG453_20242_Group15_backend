@@ -1,11 +1,13 @@
 package com.example.CENG453_20242_GROUP15_backend.user;
 
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 
 @RestController
@@ -14,6 +16,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
     // User Registration
     @PostMapping("/register")
@@ -28,16 +32,28 @@ public class UserController {
 
     // User Login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody Map<String, String> loginData) {
+    public ResponseEntity<String> login(@RequestBody Map<String, String> loginData, HttpSession session) {
         String email = loginData.get("email");
         String password = loginData.get("password");
 
-        if (userService.authenticateUser(email, password)) {
-            return ResponseEntity.ok("Login successful!");
-        } else {
-            return ResponseEntity.status(401).body("Invalid email or password.");
+        if (email == null || password == null) {
+            return ResponseEntity.badRequest().body("Email and password are required.");
         }
+
+        boolean authenticated = userService.authenticateUser(email, password);
+        if (!authenticated) {
+            return ResponseEntity.status(401).body("Invalid email or password."); // 401 Unauthorized
+        }
+
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(500).body("Authenticated but user not found.");
+        }
+
+        session.setAttribute("user", optionalUser.get());
+        return ResponseEntity.ok("Login successful!");
     }
+
 
     // Request Password Reset (Sends Token)
     @PostMapping("/request-reset")
@@ -59,6 +75,12 @@ public class UserController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpSession session) {
+        session.invalidate(); // Destroys the session
+        return ResponseEntity.ok("Logged out successfully.");
     }
 
 

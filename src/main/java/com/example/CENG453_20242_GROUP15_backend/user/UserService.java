@@ -2,8 +2,6 @@ package com.example.CENG453_20242_GROUP15_backend.user;
 
 import com.example.CENG453_20242_GROUP15_backend.leaderboard.LeaderboardDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -119,15 +117,8 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public String getCurrentUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
-    }
 
-    public Optional<UserEntity> getCurrentUser() {
-        String username = getCurrentUsername();
-        return username != null ? userRepository.findByUsername(username) : Optional.empty();
-    }
+
 
 }
 
