@@ -37,7 +37,6 @@ public class SoloGameController {
     @PostMapping("/start")
     public ResponseEntity<String> startGame() {
         UserEntity user = getAuthenticatedUser();
-
         List<Player> players = List.of(
                 new Player(user),
                 new Player("CPU1", true),
