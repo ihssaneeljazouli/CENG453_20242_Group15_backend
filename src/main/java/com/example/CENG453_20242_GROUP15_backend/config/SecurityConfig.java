@@ -26,6 +26,7 @@ public class SecurityConfig {
                                 "/solo/play",
                                 "/solo/draw",
                                 "/solo/start",
+                                "/solo/state",
                                 "/solo/restart",
                                 "/solo/cheat/skip",
                                 "/solo/cheat/reverse",

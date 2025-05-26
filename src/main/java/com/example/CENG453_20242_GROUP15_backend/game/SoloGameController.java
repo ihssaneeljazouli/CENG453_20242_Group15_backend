@@ -3,15 +3,18 @@ package com.example.CENG453_20242_GROUP15_backend.game;
 import com.example.CENG453_20242_GROUP15_backend.exception.UnauthorizedException;
 import com.example.CENG453_20242_GROUP15_backend.user.UserEntity;
 import com.example.CENG453_20242_GROUP15_backend.user.UserService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Component
 @RestController
 @RequestMapping("/solo")
 @CrossOrigin
@@ -22,11 +25,17 @@ public class SoloGameController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private HttpSession session;
+
+    public SoloGameController() {
+        System.out.println(">>> SoloGameController constructor called");
+    }
+    @PostConstruct
+    public void init() {
+        System.out.println(">>> SoloGameController initialized");
+    }
 
     // Helper method to check if the user is authenticated
-    private UserEntity getAuthenticatedUser() {
+    private UserEntity getAuthenticatedUser(HttpSession session) {
         UserEntity user = (UserEntity) session.getAttribute("user");
         if (user == null) {
             throw new UnauthorizedException("User not authenticated.");
@@ -35,8 +44,8 @@ public class SoloGameController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<String> startGame() {
-        UserEntity user = getAuthenticatedUser();
+    public ResponseEntity<String> startGame(HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
         List<Player> players = List.of(
                 new Player(user),
                 new Player("CPU1", true),
@@ -47,15 +56,20 @@ public class SoloGameController {
         Game game = new Game(players);
         SoloGame soloGame = new SoloGame(game);
         soloGames.put(user.getUsername(), soloGame);
+        System.out.println("Session ID: " + session.getId());
+        System.out.println("User in session: " + session.getAttribute("user"));
 
         return ResponseEntity.ok("Solo game started.");
     }
 
     @GetMapping("/state")
-    public ResponseEntity<?> getGameState() {
-        UserEntity user = getAuthenticatedUser();
+    public ResponseEntity<?> getGameState(HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
 
         SoloGame soloGame = soloGames.get(user.getUsername());
+        System.out.println("Session ID: " + session.getId());
+        System.out.println("User in session: " + session.getAttribute("user"));
+
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
@@ -64,8 +78,8 @@ public class SoloGameController {
     }
 
     @PostMapping("/play")
-    public ResponseEntity<?> playCard(@RequestBody PlayCardRequest request) {
-        UserEntity user = getAuthenticatedUser();
+    public ResponseEntity<?> playCard(@RequestBody PlayCardRequest request,HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
 
         SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {
@@ -108,8 +122,8 @@ public class SoloGameController {
     }
 
     @PostMapping("/draw")
-    public ResponseEntity<?> drawCard() {
-        UserEntity user = getAuthenticatedUser();
+    public ResponseEntity<?> drawCard(HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
 
         SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {
@@ -121,11 +135,11 @@ public class SoloGameController {
     }
 
     @PostMapping("/restart")
-    public ResponseEntity<?> restartGame() {
-        UserEntity user = getAuthenticatedUser();
+    public ResponseEntity<?> restartGame(HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
 
         // Restart the game
-        ResponseEntity<String> startResponse = startGame();
+        ResponseEntity<String> startResponse = startGame(session);
         if (!startResponse.getStatusCode().is2xxSuccessful()) {
             return startResponse;
         }
@@ -134,8 +148,8 @@ public class SoloGameController {
     }
 
     @PostMapping("/cheat/{action}")
-    public ResponseEntity<?> cheatPlay(@PathVariable String action) {
-        UserEntity user = getAuthenticatedUser();
+    public ResponseEntity<?> cheatPlay(@PathVariable String action, HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
 
         SoloGame soloGame = soloGames.get(user.getUsername());
         if (soloGame == null) {

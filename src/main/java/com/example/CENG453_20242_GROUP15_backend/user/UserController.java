@@ -51,6 +51,9 @@ public class UserController {
         }
 
         session.setAttribute("user", optionalUser.get());
+        System.out.println("User ID in session: " + optionalUser.get().getId());
+        System.out.println("User name in session: " + optionalUser.get().getUsername());
+
         return ResponseEntity.ok("Login successful!");
     }
 
