@@ -200,5 +200,25 @@ public class SoloGameController {
     }
 
 
+    @PostMapping("/cpu/play")
+    public ResponseEntity<?> playCpuTurn(HttpSession session) {
+        UserEntity user = getAuthenticatedUser(session);
+        SoloGame soloGame = soloGames.get(user.getUsername());
+
+        if (soloGame == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
+        }
+
+        Game game = soloGame.getGame();
+        if (!game.getCurrentPlayer().isCPU()) {
+            return ResponseEntity.badRequest().body("It's not a CPU turn.");
+        }
+
+        soloGame.playCpuTurn(); // plays just ONE CPU turn
+
+        return ResponseEntity.ok(GameStateResponse.from(game));
+    }
+
+
 
 }
