@@ -124,15 +124,50 @@ public class SoloGameController {
     @PostMapping("/draw")
     public ResponseEntity<?> drawCard(HttpSession session) {
         UserEntity user = getAuthenticatedUser(session);
-
         SoloGame soloGame = soloGames.get(user.getUsername());
+
         if (soloGame == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game not started.");
         }
 
-        soloGame.getGame().drawCard(soloGame.getGame().getCurrentPlayer());
-        return ResponseEntity.ok(GameStateResponse.from(soloGame.getGame()));
+        Game game = soloGame.getGame();
+        Player current = game.getCurrentPlayer();
+
+        // Only allow draw for human players
+        if (current.isCPU()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("It's not your turn.");
+        }
+
+        // Check if player has playable cards before drawing
+        List<Card> playable = current.getPlayableCards(
+                game.getDiscardPile().peek(),
+                game.getCurrentColor()
+        );
+
+        if (!playable.isEmpty()) {
+            return ResponseEntity.badRequest().body("You have playable cards. You must play.");
+        }
+
+        // Draw one card
+        game.drawCard(current);
+
+        // Check if the new card is playable
+        List<Card> newPlayable = current.getPlayableCards(
+                game.getDiscardPile().peek(),
+                game.getCurrentColor()
+        );
+
+        // If not playable, advance turn and let CPUs play
+        if (newPlayable.isEmpty()) {
+            game.advanceTurn();
+            while (!soloGame.isGameOver() && game.getCurrentPlayer().isCPU()) {
+                soloGame.playCpuTurn();
+            }
+        }
+
+        return ResponseEntity.ok(GameStateResponse.from(game));
     }
+
 
     @PostMapping("/restart")
     public ResponseEntity<?> restartGame(HttpSession session) {

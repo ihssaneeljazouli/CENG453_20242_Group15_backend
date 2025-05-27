@@ -36,9 +36,10 @@ public class Card {
 
     public boolean isPlayableOn(Card topCard, Color currentColor) {
         return this.color == currentColor ||
+                this.type == topCard.getType() ||
                 (this.type == Type.NUMBER && topCard.getType() == Type.NUMBER && this.number == topCard.getNumber()) ||
-                this.color == Color.WILD ||
-                this.type == Type.WILD || this.type == Type.WILD_DRAW_FOUR;
+                this.type == Type.WILD ||
+                this.type == Type.WILD_DRAW_FOUR;
     }
 
 }

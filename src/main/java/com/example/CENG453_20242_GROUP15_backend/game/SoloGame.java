@@ -37,30 +37,38 @@ public class SoloGame {
 
 
     public void playCpuTurn() {
-        Player cpu = game.getCurrentPlayer();
-        List<Card> playable = cpu.getPlayableCards(game.getDiscardPile().peek(), game.getCurrentColor());
+        try {
+            Player cpu = game.getCurrentPlayer();
+            List<Card> playable = cpu.getPlayableCards(game.getDiscardPile().peek(), game.getCurrentColor());
 
-        if (playable.isEmpty()) {
-            game.drawCard(cpu);
-            playable = cpu.getPlayableCards(game.getDiscardPile().peek(), game.getCurrentColor());
-        }
-
-        if (!playable.isEmpty()) {
-            Card cardToPlay = playable.get(random.nextInt(playable.size()));
-            Card.Color chosenColor = cardToPlay.getColor();
-
-            if (cardToPlay.getColor() == Card.Color.WILD) {
-                chosenColor = randomColor(); // Randomly choose color if wild
+            if (playable.isEmpty()) {
+                game.drawCard(cpu);
+                Thread.sleep(800);  // delay to show draw
+                playable = cpu.getPlayableCards(game.getDiscardPile().peek(), game.getCurrentColor());
             }
 
-            game.getDiscardPile().push(cardToPlay);
-            cpu.getHand().remove(cardToPlay);
-            applyCardEffect(cardToPlay, chosenColor);
-            game.checkWin(cpu);
-        }
+            if (!playable.isEmpty()) {
+                Card cardToPlay = playable.get(random.nextInt(playable.size()));
+                Card.Color chosenColor = cardToPlay.getColor();
 
-        if (!isGameOver()) game.advanceTurn();
+                if (cardToPlay.getColor() == Card.Color.WILD) {
+                    chosenColor = randomColor();
+                }
+
+                game.getDiscardPile().push(cardToPlay);
+                cpu.getHand().remove(cardToPlay);
+                applyCardEffect(cardToPlay, chosenColor);
+                game.checkWin(cpu);
+                Thread.sleep(800); // delay to show card played
+            }
+
+            if (!isGameOver()) game.advanceTurn();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
+
 
     // Applies the effect of special cards
     private void applyCardEffect(Card card, Card.Color chosenColor) {
