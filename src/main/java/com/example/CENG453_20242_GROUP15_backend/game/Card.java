@@ -34,12 +34,25 @@ public class Card {
         this.number= number;
     }
 
-    public boolean isPlayableOn(Card topCard, Color currentColor) {
-        return this.color == currentColor ||
-                this.type == topCard.getType() ||
-                (this.type == Type.NUMBER && topCard.getType() == Type.NUMBER && this.number == topCard.getNumber()) ||
-                this.type == Type.WILD ||
-                this.type == Type.WILD_DRAW_FOUR;
+     public boolean isPlayableOn(Card topCard, Color currentColor) {
+        // Always playable
+        if (this.type == Type.WILD || this.type == Type.WILD_DRAW_FOUR) {
+            return true;
+        }
+        // Color match
+        if (this.color == currentColor) {
+            return true;
+        }
+        // Number card: match number
+        if (this.type == Type.NUMBER && topCard.getType() == Type.NUMBER && this.number == topCard.getNumber()) {
+            return true;
+        }
+        // Action card: match same type (SKIP, REVERSE, DRAW_TWO)
+        if (this.type == topCard.getType() && this.type != Type.NUMBER) {
+            return true;
+        }
+        return false;
     }
+
 
 }
