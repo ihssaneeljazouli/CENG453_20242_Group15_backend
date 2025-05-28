@@ -73,9 +73,16 @@ public class SoloGame {
     // Applies the effect of special cards
     private void applyCardEffect(Card card, Card.Color chosenColor) {
         switch (card.getType()) {
-            case SKIP -> game.advanceTurn();
-            case REVERSE -> game.setClockwise(!game.isClockwise());
+            case SKIP -> {
+                game.setCurrentColor(card.getColor());
+                game.advanceTurn();
+            }
+            case REVERSE -> {
+                game.setCurrentColor(card.getColor());
+                game.setClockwise(!game.isClockwise());
+            }
             case DRAW_TWO -> {
+                game.setCurrentColor(card.getColor());
                 drawTwoStack += 2;
                 handleDrawTwoStack();
             }
@@ -85,10 +92,15 @@ public class SoloGame {
                 for (int i = 0; i < 4; i++) game.drawCard(next);
                 game.advanceTurn();
             }
-            case WILD -> game.setCurrentColor(chosenColor);
-            default -> game.setCurrentColor(card.getColor());
+            case WILD -> {
+                game.setCurrentColor(chosenColor);
+            }
+            case NUMBER -> {
+                game.setCurrentColor(card.getColor());
+            }
         }
     }
+
 
     private void handleDrawTwoStack() {
         Player next = game.getCurrentPlayer();
